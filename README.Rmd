@@ -1,0 +1,40 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# LCMStools
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+This package includes functions that I use frequently in my LC/MS or HPLC data flow.
+
+## Installation
+
+You can install the development version of LCMStools like so:
+
+``` r
+devtools::install_github('jmorim/LCMStools')
+```
+
+## Example
+
+ConvertDtoMZML converts an Agilent MS1 data file (MS2 coming soon) to mzML.
+mzML files can be read by packages like MetaboAnalyst and xcms.
+
+```{r example}
+library(LCMStools)
+
+ConvertDtoMZML(path='data', path.out='data/_mzML')
+```
