@@ -3,7 +3,7 @@
 #' @export
 # TODO
 # parameter for TOF vs MRM (SRM) data conversion
-ConvertDtoMZML = function(path, path.out = paste0(path,'/_mzML')) {
+convertDtoMZML = function(path, path.out = paste0(path,'/_mzML')) {
   file.paths = list.files(path=path, pattern='\\.d$', full.names=T)
   print(paste('file.paths:', file.paths))
   cmd = stringr::str_c('msconvert ', file.paths, ' --mzML --outdir ', path.out)
@@ -26,7 +26,7 @@ ConvertDtoMZML = function(path, path.out = paste0(path,'/_mzML')) {
 
 #' @export
 # Calculates the bounds around a mass for a given ppm threshold.
-CalcPPM = function(mz, ppm = 20) {
+calcPPM = function(mz, ppm = 20) {
   mzr = mz + mz * c(-ppm, ppm) / 10^6
   return(mzr)
 }

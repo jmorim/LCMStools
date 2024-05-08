@@ -36,5 +36,6 @@ mzML files can be read by packages like MetaboAnalyst and xcms.
 ```{r example}
 library(LCMStools)
 
-ConvertDtoMZML(path='data', path.out='data/_mzML')
+#convertDtoMZML(path='data', path.out='data/_mzML')
+calcPPM(198.1002, ppm = 20)
 ```
