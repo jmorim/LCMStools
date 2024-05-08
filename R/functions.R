@@ -23,3 +23,9 @@ ConvertDtoMZML = function(path, path.out = paste0(path,'/_mzML')) {
     system(cmd)
   }
 }
+
+# Calculates the bounds around a mass for a given ppm threshold.
+CalcPPM = function(mz, ppm = 20) {
+  mzr = mz + mz * c(-ppm, ppm) / 10^6
+  return(mzr)
+}
