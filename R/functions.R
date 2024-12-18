@@ -49,14 +49,34 @@ parseSampleInfo = function(sample.info.xml) {
 }
 
 # Parses the MRM trigger info in 192_1.xml
-parseMRMTrigger = function(ms.xml) {
-  mrm.info = ms.xml |> read_xml() |> xml_find_all('//triggerMRMInfo')
-  values = mrm.info |> map(~ {
-    xml_children(.) |> xml_text()
-  })
-  names = mrm.info |> pluck(1) |> xml_children() |> xml_name()
+# old version took the xml file
+#parseMRMTrigger = function(ms.xml) {
+#  mrm.info = ms.xml |> read_xml() |> xml_find_all('//triggerMRMInfo')
+#  values = mrm.info |> map(~ {
+#    xml_children(.) |> xml_text()
+#  })
+#  names = mrm.info |> pluck(1) |> xml_children() |> xml_name()
+#  trigger.table = map(values, ~ set_names(., names)) |> bind_rows()
+#  return(trigger.table)
+#}
+parseMRMTriggerInfo = function(xml) {
+  trigger.info = xml |> xml_find_all('//triggerMRMInfo')
+  values = trigger.info |> map(~ xml_children(.) |> xml_text())
+  names = trigger.info |> pluck(1) |> xml_children() |> xml_name()
   trigger.table = map(values, ~ set_names(., names)) |> bind_rows()
   return(trigger.table)
+}
+
+# Parses scan element info in 192_1.xml
+parseScanElement = function(xml) {
+  scan.info = xml |> xml_find_all('//scanElement')
+  values = scan.info |> map(~ xml_children(.) |> xml_text())
+  names = scan.info |> pluck(1) |> xml_children() |> xml_name()
+  trigger.mrm.info = scan.info |> map(~ parseMRMTriggerInfo(.))
+
+  scan.table = map(values, ~ set_names(., names)) |> bind_rows()
+  scan.table$triggerMRMInfo = trigger.mrm.info
+  return(scan.table)
 }
 
 #' @export
