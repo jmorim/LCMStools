@@ -1,6 +1,8 @@
 #' @importFrom stringr str_c
 #' @importFrom parallel makeCluster parSapply stopCluster detectCores
-#' @importFrom xml2 read_xml xml_find_all xml_text
+#' @importFrom xml2 read_xml xml_find_all xml_text xml_name xml_children
+#' @importFrom dplyr bind_rows
+#' @importFrom purrr pluck map set_names
 #' 
 #' @export
 # TODO
@@ -44,6 +46,17 @@ parseSampleInfo = function(sample.info.xml) {
   sample.info.fields = xml.fields |> xml_find_all('//Name') |> xml_text()
   names(sample.info.values) = sample.info.fields
   return(sample.info.values)
+}
+
+# Parses the MRM trigger info in 192_1.xml
+parseMRMTrigger = function(ms.xml) {
+  mrm.info = ms.xml |> read_xml() |> xml_find_all('//triggerMRMInfo')
+  values = mrm.info |> map(~ {
+    xml_children(.) |> xml_text()
+  })
+  names = mrm.info |> pluck(1) |> xml_children() |> xml_name()
+  trigger.table = map(values, ~ set_names(., names)) |> bind_rows()
+  return(trigger.table)
 }
 
 #' @export
