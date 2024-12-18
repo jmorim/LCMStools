@@ -2,8 +2,12 @@
 
 export(calcPPM)
 export(convertDtoMZML)
+export(parseSampleInfo)
 importFrom(parallel,detectCores)
 importFrom(parallel,makeCluster)
 importFrom(parallel,parSapply)
 importFrom(parallel,stopCluster)
 importFrom(stringr,str_c)
+importFrom(xml2,read_xml)
+importFrom(xml2,xml_find_all)
+importFrom(xml2,xml_text)

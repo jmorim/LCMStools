@@ -35,8 +35,8 @@ calcPPM = function(mz, ppm = 20) {
 }
 
 #' @export
-#' Parses a data file's sample_info.xml to a named vector
-#' Combine with map_dfr to generate a data table for multiple data files
+# Parses a data file's sample_info.xml to a named vector
+# Combine with map_dfr to generate a data table for multiple data files
 parseSampleInfo = function(sample.info.xml) {
   sample.info = read_xml(sample.info.xml)
   xml.fields = sample.info |> xml_find_all('//Field')
