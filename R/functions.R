@@ -148,6 +148,7 @@ parseChromatograms = function(xml) {
   return(chromatogram.table)
 }
 
+#' @export
 # Parses whole MS method using above parsers. Combine with map_dfr to build a
 # table for multiple method files
 parseMSMethod = function(xml.file) {
