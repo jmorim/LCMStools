@@ -60,16 +60,16 @@ parseSampleInfo = function(sample.info.xml) {
 #  return(trigger.table)
 #}
 parseMRMTriggerInfo = function(xml) {
-  trigger.info = xml |> xml_find_all('//triggerMRMInfo')
+  trigger.info = xml |> xml_find_all('.//triggerMRMInfo')
   values = trigger.info |> map(~ xml_children(.) |> xml_text())
   names = trigger.info |> pluck(1) |> xml_children() |> xml_name()
   trigger.table = map(values, ~ set_names(., names)) |> bind_rows()
   return(trigger.table)
 }
 
-# Parses scan element info in 192_1.xml
+# Parses scan element info in 192_1.xml containing multiple MRM trigger tables
 parseScanElement = function(xml) {
-  scan.info = xml |> xml_find_all('//scanElement')
+  scan.info = xml |> xml_find_all('.//scanElement')
   values = scan.info |> map(~ xml_children(.) |> xml_text())
   names = scan.info |> pluck(1) |> xml_children() |> xml_name()
   trigger.mrm.info = scan.info |> map(~ parseMRMTriggerInfo(.))
@@ -77,6 +77,87 @@ parseScanElement = function(xml) {
   scan.table = map(values, ~ set_names(., names)) |> bind_rows()
   scan.table$triggerMRMInfo = trigger.mrm.info
   return(scan.table)
+}
+
+# Parses scan segment, which contains multiple scan elements
+parseScanSegment = function(xml) {
+  scan.segment = xml |> xml_find_all('.//scanSegment')
+  values = scan.segment |> map(~ xml_children(.) |> xml_text())
+  names = scan.segment |> pluck(1) |> xml_children() |> xml_name()
+  scan.info = scan.segment |> parse.scan.element()
+
+  scan.segment.table = map(values, ~ set_names(., names)) |> bind_rows()
+  scan.segment.table$scanElements = scan.info
+  return(scan.segment.table)
+}
+
+# Parses the source parameters from 192_1.xml
+parseSourceParams = function(xml) {
+  source.params = xml |> xml_find_all('.//sourceParameter')
+  params = source.params |> map_df(~ {
+    id = xml_find_first(., 'id') |> xml_text()
+    pos = xml_find_first(., 'posPolarityValue') |> xml_text() |> as.numeric()
+    neg = xml_find_first(., 'negPolarityValue') |> xml_text() |> as.numeric()
+    tibble(
+      id = c(id, id),
+      polarity = c('positive', 'negative'),
+      value = c(pos, neg)
+    )
+  })
+  return(params)
+}
+
+# Parses ion funnel parameters: positive/negative, high rf/low rf, voltage
+parseIonFunnel = function(xml) {
+  ion.funnel.info = xml |> xml_find_all('.//IonFunnel') |> xml_children()
+  ion.funnel.table = ion.funnel.info |> map_df(~ {
+    name = xml_name(.)
+    value = xml_text(.) |> as.numeric()
+    tibble(
+      polarity = if_else(str_detect(name, '^Pos'), 'positive', 'negative'),
+      pressure = str_extract(name, 'HP|LP'),
+      voltage = value
+    )
+  })
+  return(ion.funnel.table)
+}
+
+# Parses time segment containing starTime, diverterValveState, sourceParameters,
+# isDataSaved, scanSegments, and IonFunnel parameters
+parseTimeSegment = function(xml) {
+  time.info = xml |> xml_find_all('.//timeSegment')
+  values = time.info |> map(~ xml_children(.) |> xml_text())
+  names = time.info |> pluck(1) |> xml_children() |> xml_name()
+  scan.segments = time.info |> map(~ parse.scan.segment(.))
+  source.params = time.info |> map(~ parse.source.params(.))
+  ion.funnel = time.info |> map(~ parse.ion.funnel(.))
+
+  time.table = map(values, ~ set_names(., names)) |> bind_rows()
+  time.table$scanSegments = scan.segments
+  time.table$sourceParameters = source.params
+  time.table$IonFunnel = ion.funnel
+  return(time.table)
+}
+
+# Parses chromatogram parameters used for plotting in acqusition
+parseChromatograms = function(xml) {
+  chromatogram.info = xml |> xml_find_all('.//chromatogram')
+  names = chromatogram.info |> pluck(1) |> xml_children() |> xml_name()
+  values = chromatogram.info |> map(~ xml_children(.) |> xml_text())
+  chromatogram.table = map(values, ~ set_names(., names)) |> bind_rows()
+  return(chromatogram.table)
+}
+
+# Parses whole MS method using above parsers. Combine with map_dfr to build a
+# table for multiple method files
+parseMSMethod = function(xml.file) {
+  ms.info = xml.file |> read_xml() |> xml_children()
+  names = ms.info |> xml_name()
+  values = ms.info |> xml_text(trim=T)
+  method.table = tibble(!!!set_names(values, names))
+  method.table$timeSegments = parse.time.segment(ms.info)
+  method.table$chromatograms = parse.chromatograms(ms.info)
+  return(method.table)
 }
 
 #' @export
