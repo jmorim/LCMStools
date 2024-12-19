@@ -1,8 +1,8 @@
 #' @importFrom stringr str_c
 #' @importFrom parallel makeCluster parSapply stopCluster detectCores
 #' @importFrom xml2 read_xml xml_find_all xml_text xml_name xml_children
-#' @importFrom dplyr bind_rows
-#' @importFrom purrr pluck map set_names
+#' @importFrom dplyr bind_rows tibble
+#' @importFrom purrr pluck map set_names map_df
 #' 
 #' @export
 # TODO
@@ -72,7 +72,13 @@ parseScanElement = function(xml) {
   scan.info = xml |> xml_find_all('.//scanElement')
   values = scan.info |> map(~ xml_children(.) |> xml_text())
   names = scan.info |> pluck(1) |> xml_children() |> xml_name()
-  trigger.mrm.info = scan.info |> map(~ parseMRMTriggerInfo(.))
+  trigger.mrm.info = scan.info |> map(~ {
+    if (xml_find_all(., './/triggerMRMInfo') |> length() > 0) {
+      parseMRMTriggerInfo(.)
+    } else {
+      NA
+    }
+  })
 
   scan.table = map(values, ~ set_names(., names)) |> bind_rows()
   scan.table$triggerMRMInfo = trigger.mrm.info
@@ -84,7 +90,7 @@ parseScanSegment = function(xml) {
   scan.segment = xml |> xml_find_all('.//scanSegment')
   values = scan.segment |> map(~ xml_children(.) |> xml_text())
   names = scan.segment |> pluck(1) |> xml_children() |> xml_name()
-  scan.info = scan.segment |> parse.scan.element()
+  scan.info = scan.segment |> map(parseScanElement)
 
   scan.segment.table = map(values, ~ set_names(., names)) |> bind_rows()
   scan.segment.table$scanElements = scan.info
@@ -122,15 +128,15 @@ parseIonFunnel = function(xml) {
   return(ion.funnel.table)
 }
 
-# Parses time segment containing starTime, diverterValveState, sourceParameters,
+# Parses time segment containing startTime, diverterValveState, sourceParameters,
 # isDataSaved, scanSegments, and IonFunnel parameters
 parseTimeSegment = function(xml) {
   time.info = xml |> xml_find_all('.//timeSegment')
   values = time.info |> map(~ xml_children(.) |> xml_text())
   names = time.info |> pluck(1) |> xml_children() |> xml_name()
-  scan.segments = time.info |> map(~ parse.scan.segment(.))
-  source.params = time.info |> map(~ parse.source.params(.))
-  ion.funnel = time.info |> map(~ parse.ion.funnel(.))
+  scan.segments = time.info |> map(~ parseScanSegment(.))
+  source.params = time.info |> map(~ parseSourceParams(.))
+  ion.funnel = time.info |> map(~ parseIonFunnel(.))
 
   time.table = map(values, ~ set_names(., names)) |> bind_rows()
   time.table$scanSegments = scan.segments
@@ -156,8 +162,8 @@ parseMSMethod = function(xml.file) {
   names = ms.info |> xml_name()
   values = ms.info |> xml_text(trim=T)
   method.table = tibble(!!!set_names(values, names))
-  method.table$timeSegments = parse.time.segment(ms.info)
-  method.table$chromatograms = parse.chromatograms(ms.info)
+  method.table$timeSegments = parseTimeSegment(ms.info)
+  method.table$chromatograms = parseChromatograms(ms.info)
   return(method.table)
 }
 
