@@ -7,5 +7,6 @@
 #' @importFrom parallel parSapply
 #' @importFrom parallel stopCluster
 #' @importFrom stringr str_c
+#' @importFrom tibble add_column
 ## usethis namespace: end
 NULL

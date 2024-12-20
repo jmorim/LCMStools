@@ -2,6 +2,7 @@
 #' @importFrom parallel makeCluster parSapply stopCluster detectCores
 #' @importFrom xml2 read_xml xml_find_all xml_text xml_name xml_children xml_find_first
 #' @importFrom dplyr bind_rows tibble if_else
+#' @importFrom tibble add_column
 #' @importFrom purrr pluck map set_names map_df
 
 #' @title
@@ -219,8 +220,15 @@ parseMSMethod <- function(xml.file) {
   values <- ms.info |> xml_text(trim = T)
   method.table <- tibble(!!!set_names(values, names))
 
+  sample.info = parseSampleInfo(
+    file.path(dirname(dirname(xml.file)), 'sample_info.xml')
+  )
+  method.table |> add_column(dataFile = sample.info |> pluck('Data File'), .after='msInstrument')
+  method.table |> add_column(sampleName = sample.info |> pluck('Sample Name'), .after='msInstrument')
+
   method.table$timeSegments <- parseTimeSegment(ms.info)
   method.table$chromatograms <- parseChromatograms(ms.info)
+  
   return(method.table)
 }
 
