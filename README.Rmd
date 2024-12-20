@@ -35,7 +35,34 @@ mzML files can be read by packages like MetaboAnalyst and xcms.
 
 ```{r example}
 library(LCMStools)
+library(dplyr)
+library(purrr)
 
-#convertDtoMZML(path='data', path.out='data/_mzML')
-calcPPM(198.1002, ppm = 20)
+# Convert .d files to .mzML
+file = system.file(
+  'extdata', '_d/0001.d', package='LCMStools'
+)
+convertDtoMZML(file=file, path.out=paste0(file, '/_mzML'))
+
+# Calculate ppm windows
+calcPPM(mz=198.1002, ppm = 20)
+
+# Parsing sample info
+file = system.file(
+  'extdata', '_d/0001.d/AcqData/sample_info.xml', package='LCMStools'
+)
+parseSampleInfo(file)
+
+# Parsing MS method info
+# single file
+file = system.file(
+  'extdata', '_d/0001.d/AcqData/opt_dmrm.m/192_1.xml', package='LCMStools'
+)
+ms.method <- parseMSMethod(xml.file=file)
+ms.method$timeSegments$scanSegments[[1]]$scanElements
+
+# multiple files
+system.file("extdata", "_d", package = "LCMStools") |>
+  dir(pattern = "192_1.xml", recursive = TRUE, full.names = TRUE) |>
+  map_df(parseMSMethod)
 ```
