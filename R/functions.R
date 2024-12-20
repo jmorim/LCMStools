@@ -1,7 +1,7 @@
-#' @importFrom stringr str_c
+#' @importFrom stringr str_c str_detect str_extract
 #' @importFrom parallel makeCluster parSapply stopCluster detectCores
-#' @importFrom xml2 read_xml xml_find_all xml_text xml_name xml_children
-#' @importFrom dplyr bind_rows tibble
+#' @importFrom xml2 read_xml xml_find_all xml_text xml_name xml_children xml_find_first
+#' @importFrom dplyr bind_rows tibble if_else
 #' @importFrom purrr pluck map set_names map_df
 #' 
 #' @export
