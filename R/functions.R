@@ -223,8 +223,13 @@ parseMSMethod <- function(xml.file) {
   sample.info = parseSampleInfo(
     file.path(dirname(dirname(xml.file)), 'sample_info.xml')
   )
-  method.table |> add_column(dataFile = sample.info |> pluck('Data File'), .after='msInstrument')
-  method.table |> add_column(sampleName = sample.info |> pluck('Sample Name'), .after='msInstrument')
+  method.table = add_column(
+    method.table,
+    sampleName = sample.info |> pluck('Sample Name'),
+    dataFile = sample.info |> pluck('Data File'),
+    .after='msInstrument'
+  )
+#  method.table = add_column(method.table, dataFile = sample.info |> pluck('Data File'), .after='sampleName')
 
   method.table$timeSegments <- parseTimeSegment(ms.info)
   method.table$chromatograms <- parseChromatograms(ms.info)
