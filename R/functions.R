@@ -4,6 +4,9 @@
 #' @importFrom dplyr bind_rows tibble if_else
 #' @importFrom tibble add_column
 #' @importFrom purrr pluck map set_names map_df
+#' @importFrom Biobase featureData
+#' @importFrom MSnbase readSRMData rtime intensity fromFile isEmpty
+#' @importFrom xcms chromPeaks findChromPeaks CentWaveParam
 
 #' @title
 #' convertDtoMZML()
@@ -20,6 +23,7 @@
 # parameter for TOF vs MRM (SRM) data conversion
 # rewrite to take a list of files instead of a path
 convertDtoMZML = function(file, path.out = paste0(file,'/_mzML')) {
+#  exp.type = file |> dir(pattern='192_1.xml') |> read_xml()# |> xml_find_all()
 #  file.paths = list.files(path=path, pattern='\\.d$', full.names=T, include.dirs=T)
 #  print(paste('file.paths:', file.paths))
   cmd = stringr::str_c('msconvert ', file, ' --mzML --outdir ', path.out)
@@ -235,6 +239,70 @@ parseMSMethod <- function(xml.file) {
   method.table$chromatograms <- parseChromatograms(ms.info)
   
   return(method.table)
+}
+
+#' @title
+#' Get chromatograms for each collision energy in experiment
+#' @description
+#' Returns a data frame of retention times and intensities (chromatograms) along
+#' with the associated collision energy of the MS experiment
+#' 
+#' @param chromatograms A list of chromatogram objects
+#' @returns A long data frame of retention times, intensities, collision
+#' energies, and data file
+#' @examples
+#' library(MSnbase)
+#' ex.file = system.file('extdata', '_d/0176.d/0176.mzML', package='LCMStools')
+#' ex.data = readSRMData(ex.file)
+#' getCEChroms(ex.data)
+#' @export
+getCEChroms <- function(chromatograms) {
+  ce.data = data.frame()
+  for(i in seq_along(chromatograms)){
+    ce.data = bind_rows(ce.data, data.frame(
+      rtime = rtime(chromatograms[i]), 
+      intensity = intensity(chromatograms[i]),
+      precursor = featureData(chromatograms)$precursorIsolationWindowTargetMZ[i],
+      product = featureData(chromatograms)$productIsolationWindowTargetMZ[i],
+      ce = featureData(chromatograms)$precursorCollisionEnergy[i],
+      file = fromFile(chromatograms[i])))
+  }
+  return(ce.data)
+}
+
+#' @title
+#' Get peak intensities for each collision energy in an experiment
+#' @description
+#' Returns a data frame of collision energies, peak intensities, and data files.
+#' Assumes that one peak is detected per file.
+#' 
+#' @param peaks An XChromatogram object that contains detected peaks
+#' @returns A data frame of collision energy, peak intensities, and data files.
+#' @examples
+#' library(xcms)
+#' ex.file = system.file('extdata', '_d/0176.d/0176.mzML', package='LCMStools')
+#' ex.data = readSRMData(ex.file)
+#' ex.peaks = findChromPeaks(ex.data, CentWaveParam(peakwidth=c(0.2,0.25)))
+#' getCEData(ex.peaks)
+#' @export
+getCEData <- function(peaks) {
+  ce.data = data.frame()
+  for(i in seq_len(nrow(peaks))){
+    ce.data = ce.data |> bind_rows(
+      data.frame(
+        precursor = featureData(peaks)$precursorIsolationWindowTargetMZ[i],
+        product = featureData(peaks)$productIsolationWindowTargetMZ[i],
+        ce = featureData(peaks)$precursorCollisionEnergy[i],
+        file = fromFile(peaks[i]),
+        into = if(!isEmpty(chromPeaks(peaks[i]))){
+          chromPeaks(peaks[i])[,'into']
+        } else {
+          0
+        }
+      )
+    )
+  }
+  return(ce.data)
 }
 
 #'
