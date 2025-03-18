@@ -22,11 +22,14 @@
 # TODO
 # parameter for TOF vs MRM (SRM) data conversion
 # rewrite to take a list of files instead of a path
-convertDtoMZML = function(file, path.out = paste0(file,'/_mzML')) {
+convertDtoMZML = function(file, path.out = paste0(file,'/_mzML'), MRM=FALSE) {
 #  exp.type = file |> dir(pattern='192_1.xml') |> read_xml()# |> xml_find_all()
 #  file.paths = list.files(path=path, pattern='\\.d$', full.names=T, include.dirs=T)
 #  print(paste('file.paths:', file.paths))
-  cmd = stringr::str_c('msconvert ', file, ' --mzML --outdir ', path.out)
+  cmd = stringr::str_c('msconvert ', file, 
+    if(MRM==TRUE){
+      ' --srmAsSpectra'
+    }, ' --mzML --outdir ', path.out)
 #  print(paste('cmd: ', cmd))
 #  n.files = length(file.paths)
 #  if (n.files > 1) {
