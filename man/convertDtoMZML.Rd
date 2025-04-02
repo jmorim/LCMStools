@@ -4,7 +4,7 @@
 \alias{convertDtoMZML}
 \title{convertDtoMZML()}
 \usage{
-convertDtoMZML(file, path.out = paste0(file, "/_mzML"))
+convertDtoMZML(file, path.out = paste0(file, "/_mzML"), MRM = FALSE)
 }
 \arguments{
 \item{file}{.d data file to convert}

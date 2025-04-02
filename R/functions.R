@@ -288,7 +288,7 @@ getCEChroms <- function(chromatograms) {
 #' ex.peaks = findChromPeaks(ex.data, CentWaveParam(peakwidth=c(0.2,0.25)))
 #' getCEData(ex.peaks)
 #' @export
-getCEData <- function(peaks) {
+getCEData <- function(peaks, metric = 'into') {
   ce.data = data.frame()
   for(i in seq_len(nrow(peaks))){
     ce.data = ce.data |> bind_rows(
@@ -296,9 +296,9 @@ getCEData <- function(peaks) {
         precursor = featureData(peaks)$precursorIsolationWindowTargetMZ[i],
         product = featureData(peaks)$productIsolationWindowTargetMZ[i],
         ce = featureData(peaks)$precursorCollisionEnergy[i],
-        file = fromFile(peaks[i]),
+        file = pData(peaks)$file[i],
         into = if(!isEmpty(chromPeaks(peaks[i]))){
-          chromPeaks(peaks[i])[,'into']
+          chromPeaks(peaks[i])[metric]
         } else {
           0
         }

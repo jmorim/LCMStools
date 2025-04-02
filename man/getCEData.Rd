@@ -4,7 +4,7 @@
 \alias{getCEData}
 \title{Get peak intensities for each collision energy in an experiment}
 \usage{
-getCEData(peaks)
+getCEData(peaks, metric = "into")
 }
 \arguments{
 \item{peaks}{An XChromatogram object that contains detected peaks}
